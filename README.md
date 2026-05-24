@@ -1,6 +1,6 @@
 # Asterisk FastAGI Integration of Tellows Blacklist API
 
-> **Hinweis / Note:** This is a community fork of
+> **Note:** This is a community fork of
 > [kettenbach-it/asterisk-fastagi-tellows](https://github.com/kettenbach-it/asterisk-fastagi-tellows).
 > It fixes a startup crash (`TypeError: can only concatenate str (not "int") to str`
 > on the tellows `partnerinfo` fields) that caused the container to restart endlessly,
