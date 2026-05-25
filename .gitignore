@@ -92,3 +92,9 @@ config.yaml
 config.yaml.bak
 .envrc
 docker-compose.yml
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/

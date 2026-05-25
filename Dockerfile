@@ -19,4 +19,4 @@ RUN pip3 install --no-cache-dir --upgrade pip \
 COPY . .
 
 # -u = unbuffered - sonst erscheinen keine Logs
-CMD [ "python", "-u", "tellows.agi.py" ]
+CMD [ "python", "-u", "tellows_agi.py" ]
