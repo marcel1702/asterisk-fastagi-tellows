@@ -80,6 +80,11 @@ class TestParseTellowsJson:
         text = 'Partner Data not correct{"tellows": {"score": 3}}'
         assert tellows_agi.parse_tellows_json(text) == {"tellows": {"score": 3}}
 
+    def test_warning_suffix_stripped(self):
+        """The live API appends the warning after the JSON body."""
+        text = '{"tellows": {"score": 3}}Partner Data not correct'
+        assert tellows_agi.parse_tellows_json(text) == {"tellows": {"score": 3}}
+
     def test_unrecoverable_returns_none(self):
         assert tellows_agi.parse_tellows_json("<html>Error</html>") is None
 
@@ -261,6 +266,24 @@ class TestErrorResilience:
         mock_resp.text = "Partner Data not correct" + json.dumps(
             {"tellows": {"score": 8}}
         )
+        mock_request.return_value = mock_resp
+
+        handler = make_handler()
+        handler.handle()
+
+        handler.wfile.write.assert_called_once_with(b"SET VARIABLE TELLOWS_SCORE 8\n")
+
+    @patch("tellows_agi.requests.request")
+    @patch("tellows_agi.AGI")
+    def test_api_warning_suffix_is_tolerated(self, mock_agi_cls, mock_request):
+        """The live API appends the warning after the body; score must still be set."""
+        mock_agi_cls.return_value = make_agi_mock("01636209692")
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.text = json.dumps(
+            {"tellows": {"score": "8"}}
+        ) + "Partner Data not correct"
         mock_request.return_value = mock_resp
 
         handler = make_handler()

@@ -50,21 +50,21 @@ if not config["apikeyMd5"] or not config["host"] or not config["port"] or not co
 
 
 def parse_tellows_json(text):
-    """Parse the Tellows response, tolerating a non-JSON warning prefix.
+    """Parse the Tellows response, tolerating a non-JSON warning.
 
-    The Live Number endpoint may prepend a warning (e.g. "Partner Data not
-    correct") to the JSON body. Returns the parsed dict, or None if no valid
-    JSON object could be extracted.
+    The Live Number endpoint may wrap the JSON body in a warning (e.g.
+    "Partner Data not correct"), which the API appends as a suffix and may also
+    prepend. raw_decode() reads the first JSON object starting at the leading
+    "{" and ignores any trailing text. Returns the parsed dict, or None if no
+    valid JSON object could be extracted.
     """
+    start = text.find("{")
+    if start == -1:
+        return None
     try:
-        return json.loads(text)
+        obj, _ = json.JSONDecoder().raw_decode(text[start:])
+        return obj
     except json.JSONDecodeError:
-        start = text.find("{")
-        if start > 0:
-            try:
-                return json.loads(text[start:])
-            except json.JSONDecodeError:
-                return None
         return None
 
 
