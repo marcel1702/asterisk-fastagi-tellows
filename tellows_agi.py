@@ -125,14 +125,15 @@ class FastAGI(socketserver.StreamRequestHandler):
                     if reply is None:
                         sys.stderr.write("Invalid JSON response from Tellows\n")
                         return
-                    print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), end=": ")
-                    print("Response from tellows: ", end=" ")
                     tellows_data = reply.get("tellows", {})
-                    print("Numb.: " + str(tellows_data.get("number", "")), end=", ")
-                    print("Norm.Numb.: " + str(tellows_data.get("normalizedNumber", "")), end=", ")
-                    print("Score: " + str(tellows_data.get("score", "")), end=", ")
-                    print("Searches: " + str(tellows_data.get("searches", "")), end=", ")
-                    print("Comments: " + str(tellows_data.get("comments", "")), end=", ")
+                    print(
+                        f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S}: Response from tellows: "
+                        f"Numb.: {tellows_data.get('number', '')}, "
+                        f"Norm.Numb.: {tellows_data.get('normalizedNumber', '')}, "
+                        f"Score: {tellows_data.get('score', '')}, "
+                        f"Searches: {tellows_data.get('searches', '')}, "
+                        f"Comments: {tellows_data.get('comments', '')}"
+                    )
                     score_raw = tellows_data.get("score")
                     try:
                         score = int(score_raw)
