@@ -49,6 +49,25 @@ if not config["apikeyMd5"] or not config["host"] or not config["port"] or not co
     sys.exit(-1)
 
 
+def parse_tellows_json(text):
+    """Parse the Tellows response, tolerating a non-JSON warning prefix.
+
+    The Live Number endpoint may prepend a warning (e.g. "Partner Data not
+    correct") to the JSON body. Returns the parsed dict, or None if no valid
+    JSON object could be extracted.
+    """
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        start = text.find("{")
+        if start > 0:
+            try:
+                return json.loads(text[start:])
+            except json.JSONDecodeError:
+                return None
+        return None
+
+
 class FastAGI(socketserver.StreamRequestHandler):
     """
     FastAGI request handler for socketserver
@@ -102,10 +121,9 @@ class FastAGI(socketserver.StreamRequestHandler):
                     timeout=int(config["timeout"]),
                 )
                 if agi_request.status_code == 200:
-                    try:
-                        reply = json.loads(agi_request.text)
-                    except json.JSONDecodeError as exc:
-                        sys.stderr.write(f"Invalid JSON response from Tellows: {exc}\n")
+                    reply = parse_tellows_json(agi_request.text)
+                    if reply is None:
+                        sys.stderr.write("Invalid JSON response from Tellows\n")
                         return
                     print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), end=": ")
                     print("Response from tellows: ", end=" ")

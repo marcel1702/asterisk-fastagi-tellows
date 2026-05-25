@@ -76,7 +76,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 cp config.example.yaml config.yaml
 # now edit config.yaml according to your needs
-python3 tellows.agi.py
+python3 tellows_agi.py
 ```
 
 ## Usage in Asterisk
@@ -105,11 +105,22 @@ exten => s,n(blacklistedtellows),Congestion()
   `premium`, `validuntil`, `requests`), which the tellows API now returns as
   numbers instead of strings. This crashed the service before the FastAGI
   server could start, causing an endless container restart loop.
+- **Fixed:** several crash conditions in the request handler that could take
+  down a worker on malformed input — an unset `REDIS_PORT` at startup,
+  unparseable caller IDs, Redis being unreachable, non-JSON/error responses
+  from the API, and missing or non-numeric score fields. Network requests now
+  use a timeout so a slow API can no longer hang the handler indefinitely.
 - **Changed:** base image upgraded from the end-of-life `python:3.7-slim`
   to `python:3.12-slim`.
 - **Changed:** `requirements.txt` reduced to the dependencies actually used at
   runtime, so the image builds reliably again.
+- **Changed:** the entry point was renamed from `tellows.agi.py` to
+  `tellows_agi.py` so it can be imported by the test suite.
 - **Added:** automated image build & publish to ghcr.io via GitHub Actions.
+- **Added:** a CI workflow that runs the unit tests and a Docker build on every
+  push; the publish workflow now only runs on version tags (`v*.*.*`).
+- **Added:** a pytest unit-test suite (`tests/`) covering the handler logic and
+  the fixed crash conditions as regression tests.
 
 ## References
 
