@@ -3,7 +3,6 @@ name: Build and publish Docker image
 # Baut das Image automatisch und schiebt es nach ghcr.io
 on:
   push:
-    branches: [ "main" ]
     tags: [ "v*.*.*" ]      # z.B. v1.1.3 -> erzeugt sauber versionierte Tags
   workflow_dispatch:         # erlaubt manuelles Auslösen im Actions-Tab
 
