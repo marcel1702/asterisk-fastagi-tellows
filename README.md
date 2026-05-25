@@ -25,6 +25,11 @@ The prebuilt image of this fork is published on the
 ghcr.io/marcel1702/asterisk-fastagi-tellows:latest
 ```
 
+The image is published as a multi-arch manifest for `linux/amd64` and
+`linux/arm64`, so the same tag runs on a regular x86-64 host as well as on a
+64-bit Raspberry Pi (arm64) — `docker pull` picks the matching platform
+automatically.
+
 Use [docker-compose.example.yml](docker-compose.example.yml) to run your container.
 The example below is self-contained and also starts the required Redis service.
 Configuration is done via environment variables:
@@ -117,6 +122,8 @@ exten => s,n(blacklistedtellows),Congestion()
 - **Changed:** the entry point was renamed from `tellows.agi.py` to
   `tellows_agi.py` so it can be imported by the test suite.
 - **Added:** automated image build & publish to ghcr.io via GitHub Actions.
+- **Added:** multi-arch images (`linux/amd64` and `linux/arm64`), so the same
+  tag runs on x86-64 hosts and on a 64-bit Raspberry Pi.
 - **Added:** a CI workflow that runs the unit tests and a Docker build on every
   push; the publish workflow now only runs on version tags (`v*.*.*`).
 - **Added:** a pytest unit-test suite (`tests/`) covering the handler logic and
