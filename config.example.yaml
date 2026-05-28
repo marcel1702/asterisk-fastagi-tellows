@@ -5,7 +5,15 @@ host: "127.0.0.1"   # IP the FastAGI server listens on; change to 0.0.0.0 for ne
 port: 4573          # Port the FastAGI server listens on (Asterisk FastAGI protocol default)
 timeout: 2          # Connection timeout for FastAGI requests, in seconds
 
-# Optional Redis whitelist lookup.
-# Leave redis_host empty ("") to disable the Redis check entirely.
-redis_host: ""      # e.g. 127.0.0.1
+# Default region used to normalize caller IDs to E.164 (ISO 3166-1 alpha-2).
+# Used for the Redis lookups; defaults to "DE".
+default_country: "DE"
+
+# Log level: DEBUG, INFO, WARNING or ERROR. Defaults to INFO.
+log_level: "INFO"
+
+# Optional Redis whitelist + score cache.
+# Leave redis_host empty ("") to disable Redis entirely.
+redis_host: ""              # e.g. 127.0.0.1
 redis_port: 6379
+redis_score_ttl: 86400      # Seconds a looked-up Tellows score is cached (default 24h)

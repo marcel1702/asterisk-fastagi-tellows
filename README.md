@@ -54,14 +54,39 @@ services:
       HOST: "0.0.0.0"        # Listen on all interfaces
       PORT: 4573             # Asterisk AGI port
       TIMEOUT: 2             # Timeout in seconds
+      DEFAULT_COUNTRY: DE    # Default region for caller-ID normalization (optional)
+      LOG_LEVEL: INFO        # DEBUG, INFO, WARNING or ERROR (optional)
       REDIS_HOST: redis      # Name of the redis service
       REDIS_PORT: 6379
+      REDIS_SCORE_TTL: 86400 # Cache looked-up scores for 24h (optional)
     ports:
       - "4573:4573"
 
 volumes:
   redis_data:
 ```
+
+### Configuration options
+
+| Env var / YAML key                | Default     | Description                                                                 |
+|-----------------------------------|-------------|-----------------------------------------------------------------------------|
+| `APIKEYMD5` / `apikeyMd5`         | *(required)*| Tellows API key as MD5 hash.                                                |
+| `HOST` / `host`                   | *(required)*| Listen address (`0.0.0.0` for all interfaces).                              |
+| `PORT` / `port`                   | *(required)*| Listen port (Asterisk FastAGI default `4573`).                              |
+| `TIMEOUT` / `timeout`             | *(required)*| Request/connection timeout in seconds.                                      |
+| `DEFAULT_COUNTRY` / `default_country` | `DE`    | Default region (ISO 3166-1 alpha-2) for normalizing caller IDs to E.164.    |
+| `LOG_LEVEL` / `log_level`         | `INFO`      | Log verbosity: `DEBUG`, `INFO`, `WARNING` or `ERROR`.                       |
+| `REDIS_HOST` / `redis_host`       | *(empty)*   | Redis host. Leave empty to disable Redis (whitelist **and** score cache).   |
+| `REDIS_PORT` / `redis_port`       | `6379`      | Redis port.                                                                 |
+| `REDIS_SCORE_TTL` / `redis_score_ttl` | `86400` | Seconds a looked-up Tellows score is cached in Redis (only when Redis is enabled). |
+
+**Redis whitelist:** store a number under its E.164 key (e.g. `+491636209692`)
+to always return score `1` (trusted) without querying Tellows.
+
+**Redis score cache:** after a successful API lookup the resulting score is
+cached under `score:<E.164>` for `REDIS_SCORE_TTL` seconds, so repeat callers
+no longer consume API quota. When Redis is disabled, every call queries the
+Tellows API exactly as before.
 
 ### Not using docker
 If not all of the four environment variables are supplied, the service will
@@ -128,6 +153,14 @@ exten => s,n(blacklistedtellows),Congestion()
   push; the publish workflow now only runs on version tags (`v*.*.*`).
 - **Added:** a pytest unit-test suite (`tests/`) covering the handler logic and
   the fixed crash conditions as regression tests.
+- **Added:** a Redis score cache — after a successful API lookup the score is
+  cached under `score:<E.164>` for `REDIS_SCORE_TTL` seconds (default 24h), so
+  repeat callers no longer consume Tellows API quota. Skipped when Redis is off.
+- **Added:** structured logging via Python's `logging` module with a
+  configurable `LOG_LEVEL` (`DEBUG`/`INFO`/`WARNING`/`ERROR`), replacing the
+  ad-hoc `print`/`stderr` output.
+- **Added:** a configurable `DEFAULT_COUNTRY` for caller-ID normalization, so
+  the service works for non-German deployments (was hard-coded to `DE`).
 
 ## References
 

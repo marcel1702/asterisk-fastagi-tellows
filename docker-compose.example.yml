@@ -17,8 +17,11 @@ services:
       HOST: "0.0.0.0"        # Listen on all interfaces
       PORT: 4573             # Asterisk AGI port
       TIMEOUT: 2             # Timeout in seconds
+      DEFAULT_COUNTRY: DE    # Default region for caller-ID normalization (optional)
+      LOG_LEVEL: INFO        # DEBUG, INFO, WARNING or ERROR (optional)
       REDIS_HOST: redis      # Name of the redis service
       REDIS_PORT: 6379
+      REDIS_SCORE_TTL: 86400 # Cache looked-up scores for 24h (optional)
     ports:
       - "4573:4573"
 
