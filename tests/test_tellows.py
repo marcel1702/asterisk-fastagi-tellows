@@ -376,6 +376,29 @@ class TestHandleScoreCacheWrite:
     @patch("tellows_agi.redis.Redis")
     @patch("tellows_agi.requests.request")
     @patch("tellows_agi.AGI")
+    def test_null_ttl_falls_back_to_default(
+        self, mock_agi_cls, mock_request, mock_redis_cls
+    ):
+        """An explicit null redis_score_ttl (e.g. from YAML) must use 86400, not crash."""
+        mock_agi_cls.return_value = make_agi_mock("01636209692")
+
+        mock_redis = MagicMock()
+        mock_redis.get.return_value = None
+        mock_redis_cls.return_value = mock_redis
+
+        mock_request.return_value = make_api_response(score=7)
+
+        handler = make_handler()
+        with patch.dict(tellows_agi.config, {
+            "redis_host": "127.0.0.1", "redis_port": 6379, "redis_score_ttl": None
+        }):
+            handler.handle()  # must not raise
+
+        mock_redis.setex.assert_called_once_with("score:" + NORMALIZED, 86400, 7)
+
+    @patch("tellows_agi.redis.Redis")
+    @patch("tellows_agi.requests.request")
+    @patch("tellows_agi.AGI")
     def test_cache_write_error_does_not_crash(
         self, mock_agi_cls, mock_request, mock_redis_cls
     ):
