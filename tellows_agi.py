@@ -177,9 +177,11 @@ class FastAGI(socketserver.StreamRequestHandler):
                     # Cache the score so repeat callers don't consume API quota.
                     if redis_client is not None and fullnumber is not None:
                         try:
+                            # `or 86400` also covers an explicit null in YAML
+                            # (redis_score_ttl:), where .get() returns None.
                             redis_client.setex(
                                 "score:" + fullnumber,
-                                int(config.get("redis_score_ttl", 86400)),
+                                int(config.get("redis_score_ttl") or 86400),
                                 score,
                             )
                             logger.debug("Cached score %d for %s", score, fullnumber)
