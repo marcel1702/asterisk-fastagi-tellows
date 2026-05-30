@@ -37,7 +37,7 @@ The same image is also mirrored to the
 [GitHub Container Registry](https://github.com/marcel1702/asterisk-fastagi-tellows/pkgs/container/asterisk-fastagi-tellows)
 as a fallback (`ghcr.io/marcel1702/asterisk-fastagi-tellows:latest`).
 
-Use [docker-compose.example.yml](docker-compose.example.yml) to run your container.
+Use [docker-compose.example.yml](https://github.com/marcel1702/asterisk-fastagi-tellows/blob/main/docker-compose.example.yml) to run your container.
 The example below is self-contained and also starts the required Redis service.
 Configuration is done via environment variables:
 
