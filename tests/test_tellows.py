@@ -356,7 +356,7 @@ class TestHandleScoreCacheWrite:
     def test_score_cached_with_ttl_after_api(
         self, mock_agi_cls, mock_request, mock_redis_cls
     ):
-        """After an API lookup the score must be cached via SETEX with the TTL."""
+        """After an API lookup the score must be cached via set(ex=) with the TTL."""
         mock_agi_cls.return_value = make_agi_mock("01636209692")
 
         mock_redis = MagicMock()
@@ -371,7 +371,7 @@ class TestHandleScoreCacheWrite:
         }):
             handler.handle()
 
-        mock_redis.setex.assert_called_once_with("score:" + NORMALIZED, 3600, 7)
+        mock_redis.set.assert_called_once_with("score:" + NORMALIZED, 7, ex=3600)
 
     @patch("tellows_agi.redis.Redis")
     @patch("tellows_agi.requests.request")
@@ -394,7 +394,7 @@ class TestHandleScoreCacheWrite:
         }):
             handler.handle()  # must not raise
 
-        mock_redis.setex.assert_called_once_with("score:" + NORMALIZED, 86400, 7)
+        mock_redis.set.assert_called_once_with("score:" + NORMALIZED, 7, ex=86400)
 
     @patch("tellows_agi.redis.Redis")
     @patch("tellows_agi.requests.request")
@@ -409,7 +409,7 @@ class TestHandleScoreCacheWrite:
 
         mock_redis = MagicMock()
         mock_redis.get.return_value = None
-        mock_redis.setex.side_effect = redis_lib.exceptions.ConnectionError("refused")
+        mock_redis.set.side_effect = redis_lib.exceptions.ConnectionError("refused")
         mock_redis_cls.return_value = mock_redis
 
         mock_request.return_value = make_api_response(score=7)
