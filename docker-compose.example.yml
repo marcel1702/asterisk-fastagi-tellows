@@ -7,7 +7,8 @@ services:
       - redis_data:/data
 
   asterisk-fastagi-tellows:
-    image: ghcr.io/marcel1702/asterisk-fastagi-tellows:latest
+    image: mofis/asterisk-fastagi-tellows:latest
+    # Fallback: ghcr.io/marcel1702/asterisk-fastagi-tellows:latest
     container_name: asterisk-fastagi-tellows
     restart: unless-stopped
     depends_on:

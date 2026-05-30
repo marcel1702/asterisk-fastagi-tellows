@@ -6,7 +6,8 @@
 > modernizes the build (Python 3.12 base image, slimmed-down dependencies) and
 > extends the project with additional features — a Redis score cache, an optional
 > whitelist management web GUI, structured logging and a configurable default
-> country. A prebuilt image is published on the GitHub Container Registry – see below.
+> country. A prebuilt image is published on Docker Hub (with GitHub Container
+> Registry as a fallback) – see below.
 > The full list of changes is in [What's different in this fork](#whats-different-in-this-fork).
 
 Fast-AGI service built with Python to use the
@@ -20,17 +21,21 @@ This service was developed with the aim of running in docker.
 It will also work without docker, but docker is the recommended way.
 
 ### Using docker
-The prebuilt image of this fork is published on the
-[GitHub Container Registry](https://github.com/marcel1702/asterisk-fastagi-tellows/pkgs/container/asterisk-fastagi-tellows):
+The prebuilt image of this fork is published on
+[Docker Hub](https://hub.docker.com/r/mofis/asterisk-fastagi-tellows):
 
 ```
-ghcr.io/marcel1702/asterisk-fastagi-tellows:latest
+mofis/asterisk-fastagi-tellows:latest
 ```
 
 The image is published as a multi-arch manifest for `linux/amd64` and
 `linux/arm64`, so the same tag runs on a regular x86-64 host as well as on a
 64-bit Raspberry Pi (arm64) — `docker pull` picks the matching platform
 automatically.
+
+The same image is also mirrored to the
+[GitHub Container Registry](https://github.com/marcel1702/asterisk-fastagi-tellows/pkgs/container/asterisk-fastagi-tellows)
+as a fallback (`ghcr.io/marcel1702/asterisk-fastagi-tellows:latest`).
 
 Use [docker-compose.example.yml](docker-compose.example.yml) to run your container.
 The example below is self-contained and also starts the required Redis service.
@@ -46,7 +51,8 @@ services:
       - redis_data:/data
 
   asterisk-fastagi-tellows:
-    image: ghcr.io/marcel1702/asterisk-fastagi-tellows:latest
+    image: mofis/asterisk-fastagi-tellows:latest
+    # Fallback: ghcr.io/marcel1702/asterisk-fastagi-tellows:latest
     container_name: asterisk-fastagi-tellows
     restart: unless-stopped
     depends_on:
@@ -175,7 +181,9 @@ exten => s,n(blacklistedtellows),Congestion()
   runtime, so the image builds reliably again.
 - **Changed:** the entry point was renamed from `tellows.agi.py` to
   `tellows_agi.py` so it can be imported by the test suite.
-- **Added:** automated image build & publish to ghcr.io via GitHub Actions.
+- **Added:** automated image build & publish to Docker Hub (and ghcr.io as a
+  fallback) via GitHub Actions; the Docker Hub description is kept in sync with
+  this README automatically.
 - **Added:** multi-arch images (`linux/amd64` and `linux/arm64`), so the same
   tag runs on x86-64 hosts and on a 64-bit Raspberry Pi.
 - **Added:** a CI workflow that runs the unit tests and a Docker build on every
