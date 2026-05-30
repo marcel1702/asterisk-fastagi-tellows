@@ -1,7 +1,9 @@
 # Nur die zur Laufzeit tatsaechlich vom Code importierten Pakete.
 # (pylint, isort, aiohttp/aioagi etc. aus dem Original werden nicht benoetigt.)
+flask>=3.0.0
 phonenumbers>=8.13.0
 PyYAML>=6.0.1
 pyst2==0.5.1
 redis>=5.0.0
 requests>=2.31.0
+waitress>=3.0.0

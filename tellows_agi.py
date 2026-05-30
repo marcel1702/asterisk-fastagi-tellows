@@ -15,6 +15,7 @@ import redis
 
 _redis_port = os.environ.get("REDIS_PORT")
 _redis_score_ttl = os.environ.get("REDIS_SCORE_TTL")
+_gui_port = os.environ.get("WHITELIST_GUI_PORT")
 config = {"apikeyMd5": os.environ.get("APIKEYMD5"),
           "host": os.environ.get("HOST"),
           "port": os.environ.get("PORT"),
@@ -24,6 +25,11 @@ config = {"apikeyMd5": os.environ.get("APIKEYMD5"),
           "redis_score_ttl": int(_redis_score_ttl) if _redis_score_ttl else 86400,
           "default_country": os.environ.get("DEFAULT_COUNTRY", "DE"),
           "log_level": os.environ.get("LOG_LEVEL", "INFO"),
+          "whitelist_gui_enabled": os.environ.get("WHITELIST_GUI_ENABLED", "false").lower() in ("1", "true", "yes"),
+          "whitelist_gui_host": os.environ.get("WHITELIST_GUI_HOST", "127.0.0.1"),
+          "whitelist_gui_port": int(_gui_port) if _gui_port else 8080,
+          "whitelist_gui_user": os.environ.get("WHITELIST_GUI_USER"),
+          "whitelist_gui_password": os.environ.get("WHITELIST_GUI_PASSWORD"),
           }
 
 if config["apikeyMd5"] is not None \
@@ -228,6 +234,16 @@ if __name__ == "__main__":
                      request.json().get("error"),
                      request.json().get("message"))
         sys.exit(-2)
+
+    # Start optional whitelist management GUI
+    if config.get("whitelist_gui_enabled"):
+        if not config.get("redis_host"):
+            logger.warning("WHITELIST_GUI_ENABLED is set but redis_host is not configured; GUI disabled.")
+        else:
+            import whitelist_gui
+            whitelist_gui.start_gui_thread(config)
+            logger.info("Whitelist GUI started on http://%s:%s",
+                        config["whitelist_gui_host"], config["whitelist_gui_port"])
 
     # Create socketServer
     server = socketserver.ForkingTCPServer((config["host"], int(config["port"])), FastAGI)

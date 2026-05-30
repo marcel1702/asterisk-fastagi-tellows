@@ -1,6 +1,7 @@
 name: Build and publish Docker image
 
-# Baut das Image automatisch und schiebt es nach ghcr.io
+# Baut das Image automatisch und schiebt es nach Docker Hub (primaer) und
+# ghcr.io (Fallback). Beide bekommen dasselbe Multi-Arch-Manifest aus einem Build.
 on:
   push:
     tags: [ "v*.*.*" ]      # z.B. v1.1.3 -> erzeugt sauber versionierte Tags
@@ -24,6 +25,12 @@ jobs:
       - name: Prepare image name
         run: echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
 
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}   # Access Token, nicht das Passwort
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -35,7 +42,10 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # Docker Hub zuerst (primaere oeffentliche Quelle), ghcr.io als Fallback.
+          images: |
+            docker.io/mofis/asterisk-fastagi-tellows
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=ref,event=branch
@@ -58,3 +68,12 @@ jobs:
           provenance: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      # Haelt die Docker-Hub-Repo-Beschreibung automatisch mit der README in Sync.
+      - name: Update Docker Hub description
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: mofis/asterisk-fastagi-tellows
+          readme-filepath: ./README.md

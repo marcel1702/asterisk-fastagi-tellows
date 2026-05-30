@@ -2,10 +2,13 @@
 
 > **Note:** This is a community fork of
 > [kettenbach-it/asterisk-fastagi-tellows](https://github.com/kettenbach-it/asterisk-fastagi-tellows).
-> It fixes a startup crash (`TypeError: can only concatenate str (not "int") to str`
-> on the tellows `partnerinfo` fields) that caused the container to restart endlessly,
-> and modernizes the build (Python 3.12 base image, slimmed-down dependencies).
-> A prebuilt image is published on the GitHub Container Registry – see below.
+> It fixes the startup crash that made the original container restart endlessly,
+> modernizes the build (Python 3.12 base image, slimmed-down dependencies) and
+> extends the project with additional features — a Redis score cache, an optional
+> whitelist management web GUI, structured logging and a configurable default
+> country. A prebuilt image is published on Docker Hub (with GitHub Container
+> Registry as a fallback) – see below.
+> The full list of changes is in [What's different in this fork](#whats-different-in-this-fork).
 
 Fast-AGI service built with Python to use the
 [Tellows Blacklist API Service](https://www.tellows.de/c/about-tellows-uk/tellows-api-partnership-program/)
@@ -18,11 +21,11 @@ This service was developed with the aim of running in docker.
 It will also work without docker, but docker is the recommended way.
 
 ### Using docker
-The prebuilt image of this fork is published on the
-[GitHub Container Registry](https://github.com/marcel1702/asterisk-fastagi-tellows/pkgs/container/asterisk-fastagi-tellows):
+The prebuilt image of this fork is published on
+[Docker Hub](https://hub.docker.com/r/mofis/asterisk-fastagi-tellows):
 
 ```
-ghcr.io/marcel1702/asterisk-fastagi-tellows:latest
+mofis/asterisk-fastagi-tellows:latest
 ```
 
 The image is published as a multi-arch manifest for `linux/amd64` and
@@ -30,7 +33,11 @@ The image is published as a multi-arch manifest for `linux/amd64` and
 64-bit Raspberry Pi (arm64) — `docker pull` picks the matching platform
 automatically.
 
-Use [docker-compose.example.yml](docker-compose.example.yml) to run your container.
+The same image is also mirrored to the
+[GitHub Container Registry](https://github.com/marcel1702/asterisk-fastagi-tellows/pkgs/container/asterisk-fastagi-tellows)
+as a fallback (`ghcr.io/marcel1702/asterisk-fastagi-tellows:latest`).
+
+Use [docker-compose.example.yml](https://github.com/marcel1702/asterisk-fastagi-tellows/blob/main/docker-compose.example.yml) to run your container.
 The example below is self-contained and also starts the required Redis service.
 Configuration is done via environment variables:
 
@@ -44,7 +51,8 @@ services:
       - redis_data:/data
 
   asterisk-fastagi-tellows:
-    image: ghcr.io/marcel1702/asterisk-fastagi-tellows:latest
+    image: mofis/asterisk-fastagi-tellows:latest
+    # Fallback: ghcr.io/marcel1702/asterisk-fastagi-tellows:latest
     container_name: asterisk-fastagi-tellows
     restart: unless-stopped
     depends_on:
@@ -59,8 +67,14 @@ services:
       REDIS_HOST: redis      # Name of the redis service
       REDIS_PORT: 6379
       REDIS_SCORE_TTL: 86400 # Cache looked-up scores for 24h (optional)
+      WHITELIST_GUI_ENABLED: "false"   # Set to "true" to enable the web GUI (optional)
+      WHITELIST_GUI_HOST: "0.0.0.0"   # Inside Docker bind to all interfaces
+      WHITELIST_GUI_PORT: 8080
+      # WHITELIST_GUI_USER: "admin"    # When set: enables HTTP Basic Auth
+      # WHITELIST_GUI_PASSWORD: "secret"
     ports:
       - "4573:4573"
+      # - "127.0.0.1:8080:8080"       # Whitelist GUI – only expose behind a reverse proxy
 
 volumes:
   redis_data:
@@ -79,6 +93,11 @@ volumes:
 | `REDIS_HOST` / `redis_host`       | *(empty)*   | Redis host. Leave empty to disable Redis (whitelist **and** score cache).   |
 | `REDIS_PORT` / `redis_port`       | `6379`      | Redis port.                                                                 |
 | `REDIS_SCORE_TTL` / `redis_score_ttl` | `86400` | Seconds a looked-up Tellows score is cached in Redis (only when Redis is enabled). |
+| `WHITELIST_GUI_ENABLED` / `whitelist_gui_enabled` | `false` | Enable the optional whitelist management web GUI (requires Redis). |
+| `WHITELIST_GUI_HOST` / `whitelist_gui_host` | `127.0.0.1` | GUI bind address. Use `0.0.0.0` inside Docker. |
+| `WHITELIST_GUI_PORT` / `whitelist_gui_port` | `8080` | GUI HTTP port. |
+| `WHITELIST_GUI_USER` / `whitelist_gui_user` | *(empty)* | Username for the GUI's HTTP Basic Auth (set both user and password to enable it). |
+| `WHITELIST_GUI_PASSWORD` / `whitelist_gui_password` | *(empty)* | Password for the GUI's HTTP Basic Auth. |
 
 **Redis whitelist:** store a number under its E.164 key (e.g. `+491636209692`)
 to always return score `1` (trusted) without querying Tellows.
@@ -88,9 +107,29 @@ cached under `score:<E.164>` for `REDIS_SCORE_TTL` seconds, so repeat callers
 no longer consume API quota. When Redis is disabled, every call queries the
 Tellows API exactly as before.
 
+### Whitelist management GUI
+
+An optional browser-based GUI lets you add, edit, and delete Redis whitelist entries
+without using `redis-cli`. It is **disabled by default**; enable it with
+`WHITELIST_GUI_ENABLED=true` (all GUI settings are listed in the configuration
+table above).
+
+**Requires** `REDIS_HOST` to be configured — the GUI is silently disabled if Redis is off.
+
+The GUI runs on the [waitress](https://github.com/Pylons/waitress) production WSGI
+server in a background thread, so it adds no overhead to the FastAGI handler and
+does not block call processing.
+
+**Security notes:**
+- The GUI binds to `127.0.0.1` by default (loopback only).
+- Set `WHITELIST_GUI_USER` **and** `WHITELIST_GUI_PASSWORD` to enable HTTP Basic Auth. When either is unset, no login is required.
+- For HTTPS and stricter access control, place nginx or Caddy in front of the GUI. Inside Docker, set `WHITELIST_GUI_HOST=0.0.0.0` and only expose the port on a loopback or internal interface on the host (see the commented-out port mapping in `docker-compose.example.yml`).
+
+**Number format:** the GUI accepts both E.164 (`+491636209692`) and local numbers (`01636209692`). Numbers are validated and normalized to E.164 before being stored.
+
 ### Not using docker
 If not all of the four environment variables are supplied, the service will
-fall back to reading the file "config.yaml" - see [config.example.yaml](config.example.yaml).
+fall back to reading the file "config.yaml" - see [config.example.yaml](https://github.com/marcel1702/asterisk-fastagi-tellows/blob/main/config.example.yaml).
 
 So if you want to check out the code from git and run it with python,
 create a virtual env to run the code. The image runs on Python 3.12;
@@ -146,7 +185,9 @@ exten => s,n(blacklistedtellows),Congestion()
   runtime, so the image builds reliably again.
 - **Changed:** the entry point was renamed from `tellows.agi.py` to
   `tellows_agi.py` so it can be imported by the test suite.
-- **Added:** automated image build & publish to ghcr.io via GitHub Actions.
+- **Added:** automated image build & publish to Docker Hub (and ghcr.io as a
+  fallback) via GitHub Actions; the Docker Hub description is kept in sync with
+  this README automatically.
 - **Added:** multi-arch images (`linux/amd64` and `linux/arm64`), so the same
   tag runs on x86-64 hosts and on a 64-bit Raspberry Pi.
 - **Added:** a CI workflow that runs the unit tests and a Docker build on every
@@ -161,6 +202,11 @@ exten => s,n(blacklistedtellows),Congestion()
   ad-hoc `print`/`stderr` output.
 - **Added:** a configurable `DEFAULT_COUNTRY` for caller-ID normalization, so
   the service works for non-German deployments (was hard-coded to `DE`).
+- **Added:** an optional whitelist management web GUI (`WHITELIST_GUI_ENABLED`) —
+  a small Flask app to add, edit and delete Redis whitelist entries with comments
+  and E.164 number validation, protected by optional HTTP Basic Auth. Disabled by
+  default and imported only when enabled, so deployments that don't use it are
+  unaffected. See [Whitelist management GUI](#whitelist-management-gui).
 
 ## References
 
@@ -177,4 +223,4 @@ by Volker Kettenbach.
 ## License
 GNU AGPL v3 (unchanged from the original project).
 
-For more, see [LICENSE](LICENSE)
+For more, see [LICENSE](https://github.com/marcel1702/asterisk-fastagi-tellows/blob/main/LICENSE)

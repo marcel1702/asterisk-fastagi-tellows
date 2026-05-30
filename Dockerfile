@@ -18,5 +18,10 @@ RUN pip3 install --no-cache-dir --upgrade pip \
 
 COPY . .
 
+# Ports the container listens on:
+#   4573 = Asterisk FastAGI
+#   8080 = optional whitelist management GUI (only when WHITELIST_GUI_ENABLED=true)
+EXPOSE 4573 8080
+
 # -u = unbuffered - sonst erscheinen keine Logs
 CMD [ "python", "-u", "tellows_agi.py" ]
