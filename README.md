@@ -88,6 +88,28 @@ cached under `score:<E.164>` for `REDIS_SCORE_TTL` seconds, so repeat callers
 no longer consume API quota. When Redis is disabled, every call queries the
 Tellows API exactly as before.
 
+### Whitelist management GUI
+
+An optional browser-based GUI lets you add, edit, and delete Redis whitelist entries
+without using `redis-cli`. It is **disabled by default**.
+
+| Env var / YAML key | Default | Description |
+|--------------------|---------|-------------|
+| `WHITELIST_GUI_ENABLED` / `whitelist_gui_enabled` | `false` | Set to `true` to start the GUI. |
+| `WHITELIST_GUI_HOST` / `whitelist_gui_host` | `127.0.0.1` | Bind address. Use `0.0.0.0` inside Docker. |
+| `WHITELIST_GUI_PORT` / `whitelist_gui_port` | `8080` | HTTP port for the GUI. |
+| `WHITELIST_GUI_USER` / `whitelist_gui_user` | *(empty)* | Username for HTTP Basic Auth. |
+| `WHITELIST_GUI_PASSWORD` / `whitelist_gui_password` | *(empty)* | Password for HTTP Basic Auth. |
+
+**Requires** `REDIS_HOST` to be configured — the GUI is silently disabled if Redis is off.
+
+**Security notes:**
+- The GUI binds to `127.0.0.1` by default (loopback only).
+- Set `WHITELIST_GUI_USER` **and** `WHITELIST_GUI_PASSWORD` to enable HTTP Basic Auth. When either is unset, no login is required.
+- For HTTPS and stricter access control, place nginx or Caddy in front of the GUI. Inside Docker, set `WHITELIST_GUI_HOST=0.0.0.0` and only expose the port on a loopback or internal interface on the host (see the commented-out port mapping in `docker-compose.example.yml`).
+
+**Number format:** the GUI accepts both E.164 (`+491636209692`) and local numbers (`01636209692`). Numbers are validated and normalized to E.164 before being stored.
+
 ### Not using docker
 If not all of the four environment variables are supplied, the service will
 fall back to reading the file "config.yaml" - see [config.example.yaml](config.example.yaml).

@@ -22,8 +22,14 @@ services:
       REDIS_HOST: redis      # Name of the redis service
       REDIS_PORT: 6379
       REDIS_SCORE_TTL: 86400 # Cache looked-up scores for 24h (optional)
+      WHITELIST_GUI_ENABLED: "false"   # Set to "true" to enable the web GUI
+      WHITELIST_GUI_HOST: "0.0.0.0"   # Inside Docker bind to all interfaces
+      WHITELIST_GUI_PORT: 8080
+      # WHITELIST_GUI_USER: "admin"    # When set: enables HTTP Basic Auth
+      # WHITELIST_GUI_PASSWORD: "secret"
     ports:
       - "4573:4573"
+      # - "127.0.0.1:8080:8080"       # Whitelist GUI – only expose behind a reverse proxy
 
 volumes:
   redis_data:

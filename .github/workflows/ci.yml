@@ -20,7 +20,7 @@ jobs:
         run: pip install -r requirements.txt -r requirements-dev.txt
 
       - name: Syntax check
-        run: python -m py_compile tellows_agi.py
+        run: python -m py_compile tellows_agi.py whitelist_gui.py
 
       - name: Run tests
         run: pytest tests/ -v

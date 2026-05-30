@@ -17,3 +17,12 @@ log_level: "INFO"
 redis_host: ""              # e.g. 127.0.0.1
 redis_port: 6379
 redis_score_ttl: 86400      # Seconds a looked-up Tellows score is cached (default 24h)
+
+# Optional whitelist management web GUI (default: disabled).
+# Requires Redis (redis_host must be set). Bind address defaults to 127.0.0.1.
+# For HTTPS and access control put nginx/Caddy in front.
+whitelist_gui_enabled: false
+whitelist_gui_host: "127.0.0.1"
+whitelist_gui_port: 8080
+# whitelist_gui_user: "admin"       # When set: enables HTTP Basic Auth
+# whitelist_gui_password: "secret"
