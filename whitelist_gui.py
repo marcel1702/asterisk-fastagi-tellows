@@ -30,13 +30,19 @@ _gui_config: dict = {}
 # ---------------------------------------------------------------------------
 
 def start_gui_thread(config: dict) -> None:
-    """Start the Flask GUI in a daemon thread. Returns immediately."""
+    """Start the GUI on a production WSGI server (waitress) in a daemon thread.
+
+    Returns immediately. waitress is imported lazily so it is only required when
+    the GUI is actually enabled, mirroring how Flask itself is imported.
+    """
+    from waitress import serve
+
     _gui_config.update(config)
     app.secret_key = secrets.token_hex(32)
     host = config.get("whitelist_gui_host", "127.0.0.1")
     port = int(config.get("whitelist_gui_port", 8080))
     t = threading.Thread(
-        target=lambda: app.run(host=host, port=port, use_reloader=False, debug=False),
+        target=lambda: serve(app, host=host, port=port, _quiet=True),
         daemon=True,
         name="whitelist-gui",
     )
@@ -364,6 +370,10 @@ if __name__ == "__main__":
     _gui_config.update(cfg)
     app.secret_key = secrets.token_hex(32)
     print(f"Starting whitelist GUI on http://{cfg['whitelist_gui_host']}:{cfg['whitelist_gui_port']}/")
+    # Standalone is the local development entry point, so the Flask dev server
+    # (with auto-reload and the interactive debugger) is the right tool here.
+    # The embedded path used in the container runs on waitress via
+    # start_gui_thread() instead.
     app.run(
         host=cfg["whitelist_gui_host"],
         port=cfg["whitelist_gui_port"],

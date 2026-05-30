@@ -430,11 +430,31 @@ class TestStartGuiThread:
             "whitelist_gui_port": 19999,
         }
         with patch("whitelist_gui.threading.Thread", side_effect=capturing_thread), \
-             patch.object(app, "run"):
+             patch("waitress.serve"):
             whitelist_gui.start_gui_thread(cfg)
 
         assert len(created_threads) >= 1
         assert all(t.daemon for t in created_threads)
+
+    def test_uses_waitress_to_serve(self):
+        """The embedded GUI must run on waitress, not the Flask dev server."""
+        cfg = {
+            "redis_host": "127.0.0.1",
+            "redis_port": 6379,
+            "whitelist_gui_host": "127.0.0.1",
+            "whitelist_gui_port": 19997,
+        }
+        with patch("waitress.serve") as mock_serve:
+            whitelist_gui.start_gui_thread(cfg)
+            # The daemon thread calls serve(); join briefly so the call lands.
+            for t in __import__("threading").enumerate():
+                if t.name == "whitelist-gui":
+                    t.join(timeout=2)
+        mock_serve.assert_called_once()
+        # app is passed positionally, host/port as kwargs
+        _, kwargs = mock_serve.call_args
+        assert kwargs["host"] == "127.0.0.1"
+        assert kwargs["port"] == 19997
 
     def test_secret_key_set_on_start(self):
         app.secret_key = None
@@ -444,7 +464,7 @@ class TestStartGuiThread:
             "whitelist_gui_host": "127.0.0.1",
             "whitelist_gui_port": 19998,
         }
-        with patch.object(app, "run"):
+        with patch("waitress.serve"):
             whitelist_gui.start_gui_thread(cfg)
         assert app.secret_key is not None
 

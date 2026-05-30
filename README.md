@@ -116,6 +116,10 @@ table above).
 
 **Requires** `REDIS_HOST` to be configured — the GUI is silently disabled if Redis is off.
 
+The GUI runs on the [waitress](https://github.com/Pylons/waitress) production WSGI
+server in a background thread, so it adds no overhead to the FastAGI handler and
+does not block call processing.
+
 **Security notes:**
 - The GUI binds to `127.0.0.1` by default (loopback only).
 - Set `WHITELIST_GUI_USER` **and** `WHITELIST_GUI_PASSWORD` to enable HTTP Basic Auth. When either is unset, no login is required.
