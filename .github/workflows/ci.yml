@@ -46,10 +46,12 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: false
 
-      # Smoke test: load the amd64 image locally and confirm the module
-      # imports (catches missing runtime deps / a broken entrypoint).
-      # Dummy config is provided so config validation passes; importing the
-      # module does not run the __main__ block, so no API call is made.
+      # Smoke test: load the amd64 image locally and confirm the modules
+      # import (catches missing runtime deps / a broken entrypoint). Importing
+      # whitelist_gui additionally confirms the GUI's Flask dependency is present
+      # in the image. Dummy config is provided so config validation passes;
+      # importing the modules does not run any __main__ block, so no API call is
+      # made and no server is started.
       - name: Build amd64 image for smoke test
         uses: docker/build-push-action@v6
         with:
@@ -57,9 +59,9 @@ jobs:
           load: true
           tags: tellows-ci:smoke
 
-      - name: Smoke test (import module)
+      - name: Smoke test (import modules)
         run: |
           docker run --rm \
             -e APIKEYMD5=dummy -e HOST=127.0.0.1 -e PORT=4573 -e TIMEOUT=2 \
             tellows-ci:smoke \
-            python -c "import tellows_agi; print('import OK')"
+            python -c "import tellows_agi; import whitelist_gui; print('import OK')"

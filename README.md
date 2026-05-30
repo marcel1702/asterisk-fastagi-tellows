@@ -2,10 +2,12 @@
 
 > **Note:** This is a community fork of
 > [kettenbach-it/asterisk-fastagi-tellows](https://github.com/kettenbach-it/asterisk-fastagi-tellows).
-> It fixes a startup crash (`TypeError: can only concatenate str (not "int") to str`
-> on the tellows `partnerinfo` fields) that caused the container to restart endlessly,
-> and modernizes the build (Python 3.12 base image, slimmed-down dependencies).
-> A prebuilt image is published on the GitHub Container Registry – see below.
+> It fixes the startup crash that made the original container restart endlessly,
+> modernizes the build (Python 3.12 base image, slimmed-down dependencies) and
+> extends the project with additional features — a Redis score cache, an optional
+> whitelist management web GUI, structured logging and a configurable default
+> country. A prebuilt image is published on the GitHub Container Registry – see below.
+> The full list of changes is in [What's different in this fork](#whats-different-in-this-fork).
 
 Fast-AGI service built with Python to use the
 [Tellows Blacklist API Service](https://www.tellows.de/c/about-tellows-uk/tellows-api-partnership-program/)
