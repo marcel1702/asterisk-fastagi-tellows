@@ -129,7 +129,7 @@ does not block call processing.
 
 ### Not using docker
 If not all of the four environment variables are supplied, the service will
-fall back to reading the file "config.yaml" - see [config.example.yaml](config.example.yaml).
+fall back to reading the file "config.yaml" - see [config.example.yaml](https://github.com/marcel1702/asterisk-fastagi-tellows/blob/main/config.example.yaml).
 
 So if you want to check out the code from git and run it with python,
 create a virtual env to run the code. The image runs on Python 3.12;
@@ -223,4 +223,4 @@ by Volker Kettenbach.
 ## License
 GNU AGPL v3 (unchanged from the original project).
 
-For more, see [LICENSE](LICENSE)
+For more, see [LICENSE](https://github.com/marcel1702/asterisk-fastagi-tellows/blob/main/LICENSE)
