@@ -59,8 +59,14 @@ services:
       REDIS_HOST: redis      # Name of the redis service
       REDIS_PORT: 6379
       REDIS_SCORE_TTL: 86400 # Cache looked-up scores for 24h (optional)
+      WHITELIST_GUI_ENABLED: "false"   # Set to "true" to enable the web GUI (optional)
+      WHITELIST_GUI_HOST: "0.0.0.0"   # Inside Docker bind to all interfaces
+      WHITELIST_GUI_PORT: 8080
+      # WHITELIST_GUI_USER: "admin"    # When set: enables HTTP Basic Auth
+      # WHITELIST_GUI_PASSWORD: "secret"
     ports:
       - "4573:4573"
+      # - "127.0.0.1:8080:8080"       # Whitelist GUI – only expose behind a reverse proxy
 
 volumes:
   redis_data:
@@ -79,6 +85,11 @@ volumes:
 | `REDIS_HOST` / `redis_host`       | *(empty)*   | Redis host. Leave empty to disable Redis (whitelist **and** score cache).   |
 | `REDIS_PORT` / `redis_port`       | `6379`      | Redis port.                                                                 |
 | `REDIS_SCORE_TTL` / `redis_score_ttl` | `86400` | Seconds a looked-up Tellows score is cached in Redis (only when Redis is enabled). |
+| `WHITELIST_GUI_ENABLED` / `whitelist_gui_enabled` | `false` | Enable the optional whitelist management web GUI (requires Redis). |
+| `WHITELIST_GUI_HOST` / `whitelist_gui_host` | `127.0.0.1` | GUI bind address. Use `0.0.0.0` inside Docker. |
+| `WHITELIST_GUI_PORT` / `whitelist_gui_port` | `8080` | GUI HTTP port. |
+| `WHITELIST_GUI_USER` / `whitelist_gui_user` | *(empty)* | Username for the GUI's HTTP Basic Auth (set both user and password to enable it). |
+| `WHITELIST_GUI_PASSWORD` / `whitelist_gui_password` | *(empty)* | Password for the GUI's HTTP Basic Auth. |
 
 **Redis whitelist:** store a number under its E.164 key (e.g. `+491636209692`)
 to always return score `1` (trusted) without querying Tellows.
@@ -91,15 +102,9 @@ Tellows API exactly as before.
 ### Whitelist management GUI
 
 An optional browser-based GUI lets you add, edit, and delete Redis whitelist entries
-without using `redis-cli`. It is **disabled by default**.
-
-| Env var / YAML key | Default | Description |
-|--------------------|---------|-------------|
-| `WHITELIST_GUI_ENABLED` / `whitelist_gui_enabled` | `false` | Set to `true` to start the GUI. |
-| `WHITELIST_GUI_HOST` / `whitelist_gui_host` | `127.0.0.1` | Bind address. Use `0.0.0.0` inside Docker. |
-| `WHITELIST_GUI_PORT` / `whitelist_gui_port` | `8080` | HTTP port for the GUI. |
-| `WHITELIST_GUI_USER` / `whitelist_gui_user` | *(empty)* | Username for HTTP Basic Auth. |
-| `WHITELIST_GUI_PASSWORD` / `whitelist_gui_password` | *(empty)* | Password for HTTP Basic Auth. |
+without using `redis-cli`. It is **disabled by default**; enable it with
+`WHITELIST_GUI_ENABLED=true` (all GUI settings are listed in the configuration
+table above).
 
 **Requires** `REDIS_HOST` to be configured — the GUI is silently disabled if Redis is off.
 
@@ -183,6 +188,11 @@ exten => s,n(blacklistedtellows),Congestion()
   ad-hoc `print`/`stderr` output.
 - **Added:** a configurable `DEFAULT_COUNTRY` for caller-ID normalization, so
   the service works for non-German deployments (was hard-coded to `DE`).
+- **Added:** an optional whitelist management web GUI (`WHITELIST_GUI_ENABLED`) —
+  a small Flask app to add, edit and delete Redis whitelist entries with comments
+  and E.164 number validation, protected by optional HTTP Basic Auth. Disabled by
+  default and imported only when enabled, so deployments that don't use it are
+  unaffected. See [Whitelist management GUI](#whitelist-management-gui).
 
 ## References
 
