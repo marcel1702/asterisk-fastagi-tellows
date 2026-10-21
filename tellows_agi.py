@@ -185,10 +185,10 @@ class FastAGI(socketserver.StreamRequestHandler):
                         try:
                             # `or 86400` also covers an explicit null in YAML
                             # (redis_score_ttl:), where .get() returns None.
-                            redis_client.setex(
+                            redis_client.set(
                                 "score:" + fullnumber,
-                                int(config.get("redis_score_ttl") or 86400),
                                 score,
+                                ex=int(config.get("redis_score_ttl") or 86400),
                             )
                             logger.debug("Cached score %d for %s", score, fullnumber)
                         except redis.exceptions.RedisError as exc:
