@@ -70,6 +70,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# pyst2 traces the whole AGI exchange (ARGS, ENV LINE, COMMAND, ...) to the
+# stderr stream it is given, on every connection including health checks.
+# Only pass it through when debugging.
+_agi_trace = sys.stderr if logger.isEnabledFor(logging.DEBUG) \
+    else open(os.devnull, "w", encoding="utf-8")
+
 
 def parse_tellows_json(text):
     """Parse the Tellows response, tolerating a non-JSON warning.
@@ -99,7 +105,7 @@ class FastAGI(socketserver.StreamRequestHandler):
 
     def handle(self):
         try:
-            agi = AGI(stdin=self.rfile, stdout=self.wfile, stderr=sys.stderr)
+            agi = AGI(stdin=self.rfile, stdout=self.wfile, stderr=_agi_trace)
             callerid = agi.env.get("agi_callerid")
             if callerid is None:
                 # No AGI environment was sent, e.g. a TCP health check or port
