@@ -100,7 +100,13 @@ class FastAGI(socketserver.StreamRequestHandler):
     def handle(self):
         try:
             agi = AGI(stdin=self.rfile, stdout=self.wfile, stderr=sys.stderr)
-            callerid = agi.env["agi_callerid"]
+            callerid = agi.env.get("agi_callerid")
+            if callerid is None:
+                # No AGI environment was sent, e.g. a TCP health check or port
+                # scan that connects and closes again. Nothing to look up.
+                logger.debug("Connection from %s without AGI environment, ignoring.",
+                             self.client_address[0])
+                return
             logger.info("Checking caller: %s", callerid)
             if callerid != "anonymous":
                 # Set up a Redis client and the normalized number once, so that

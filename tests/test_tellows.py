@@ -111,6 +111,26 @@ class TestHandleAnonymous:
 
 
 # ---------------------------------------------------------------------------
+# handle() — connection without AGI environment (health check / port probe)
+# ---------------------------------------------------------------------------
+
+class TestHandleEmptyEnv:
+    @patch("tellows_agi.requests.request")
+    @patch("tellows_agi.AGI")
+    def test_empty_env_is_ignored(self, mock_agi_cls, mock_request):
+        """A connection that sends no AGI env must not raise KeyError."""
+        mock_agi = MagicMock()
+        mock_agi.env = {}
+        mock_agi_cls.return_value = mock_agi
+
+        handler = make_handler()
+        handler.handle()
+
+        mock_request.assert_not_called()
+        handler.wfile.write.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
 # handle() — Redis cache hit
 # ---------------------------------------------------------------------------
 
