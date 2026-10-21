@@ -80,6 +80,11 @@ volumes:
   redis_data:
 ```
 
+The image ships with a built-in Docker `HEALTHCHECK` (every 30s, via
+`healthcheck.py`) that checks whether the FastAGI port accepts connections, so
+no `healthcheck:` block is needed in your compose file. `docker ps` shows the
+container as `healthy` / `unhealthy`.
+
 ### Configuration options
 
 | Env var / YAML key                | Default     | Description                                                                 |

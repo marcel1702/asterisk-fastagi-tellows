@@ -23,5 +23,10 @@ COPY . .
 #   8080 = optional whitelist management GUI (only when WHITELIST_GUI_ENABLED=true)
 EXPOSE 4573 8080
 
+# Mark the container unhealthy when the FastAGI port stops accepting connections.
+# Such probe connections are ignored by the server and not logged (except at DEBUG).
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD [ "python", "healthcheck.py" ]
+
 # -u = unbuffered - sonst erscheinen keine Logs
 CMD [ "python", "-u", "tellows_agi.py" ]
